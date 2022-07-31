@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import java.util.concurrent.Semaphore
 
@@ -24,7 +25,7 @@ class EglContext {
             
             void main() {
                 gl_Position = vec4(position, -0.5, 1.0);
-                uvOut = uv;
+                uvOut = vec2(uv.x, 1.0 - uv.y);
             }
         """.trimIndent()
 
@@ -41,8 +42,7 @@ class EglContext {
             
             void main() {
                 vec4 texel = texture(tex, uvOut);
-                // Effectively ignore the texel without optimizing it out
-                fragColor = texel * 0.0001 + vec4(0.0, 1.0, 1.0, 1.0);
+                fragColor = texel;
             }
         """.trimIndent()
 
@@ -56,14 +56,11 @@ class EglContext {
 
     private var vertexBuffer: FloatBuffer
     private var uvBuffer: FloatBuffer
-    //private var indexBuffer: IntBuffer
 
     private var defaultProgram: Int = -1
     private var uniformTextureLocation: Int = -1
     private var vertexLocation: Int = -1
     private var uvLocation: Int = -1
-
-    var initialized = false
 
     private fun checkGlError(msg: String) {
         val errCodeEgl = EGL14.eglGetError()
@@ -81,24 +78,20 @@ class EglContext {
 
     init {
         // Flat square
-        // Am I allocating and writing to these correctly?
         val vertices = floatArrayOf(-1f, -1f, 1f, -1f, -1f, 1f, 1f, 1f)
-        vertexBuffer = ByteBuffer.allocateDirect(vertices.size * 4).asFloatBuffer().also {
-            it.put(vertices)
-            it.position(0)
-        }
+        vertexBuffer = ByteBuffer.allocateDirect(vertices.size * 4).order(ByteOrder.nativeOrder())
+            .asFloatBuffer().also {
+                it.put(vertices)
+                it.position(0)
+            }
         val uv = floatArrayOf(0f, 0f, 1f, 0f, 0f, 1f, 1f, 1f)
-        uvBuffer = ByteBuffer.allocateDirect(uv.size * 4).asFloatBuffer().also {
-            it.put(uv)
-            it.position(0)
-        }
-        // Not being used until I can figure out what's currently not working
-        /*val indices = intArrayOf(0, 1, 2, 2, 1, 3)
-        indexBuffer = ByteBuffer.allocateDirect(indices.size * 4).asIntBuffer().also {
-            it.position(0)
-            it.put(indices)
-            it.position(0)
-        }*/
+        uvBuffer =
+            ByteBuffer.allocateDirect(uv.size * 4).order(ByteOrder.nativeOrder()).asFloatBuffer()
+                .also {
+                    it.put(uv)
+                    it.position(0)
+                }
+
         if (glThread == null) {
             glThread = HandlerThread("flutterSoftwareRendererPlugin")
             glThread!!.start()
@@ -122,14 +115,14 @@ class EglContext {
 
             display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
             if (display == EGL14.EGL_NO_DISPLAY) {
-                Log.e("Native", "No display")
                 checkGlError("Failed to get display")
             }
+
             val versionBuffer = IntArray(2)
             if (!EGL14.eglInitialize(display, versionBuffer, 0, versionBuffer, 1)) {
-                Log.e("Native", "Did not init")
                 checkGlError("Failed to initialize")
             }
+
             val configs = arrayOfNulls<EGLConfig>(1)
             val configNumBuffer = IntArray(1)
             var attrBuffer = intArrayOf(
@@ -155,14 +148,12 @@ class EglContext {
                     0
                 )
             ) {
-                Log.e("Native", "No config")
                 checkGlError("Failed to choose a config")
             }
             if (configNumBuffer[0] == 0) {
-                Log.e("Native", "No config")
                 checkGlError("Got zero configs")
             }
-            Log.d("Native", "Got Config x${configNumBuffer[0]}: ${configs[0]}")
+
             config = configs[0]
             attrBuffer = intArrayOf(
                 EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE
@@ -172,16 +163,12 @@ class EglContext {
                 Log.e("Native", "Failed to get any context")
                 checkGlError("Failed to get context")
             }
-
-            Log.d("Native", "Context = $context\n 'Current' = ${EGL14.eglGetCurrentContext()}")
-
-            initialized = true
         }
     }
 
     // Called by my plugin to get a surface to register for Texture widget
     fun buildSurfaceTextureWindow(surfaceTexture: SurfaceTexture): EGLSurface {
-        var _surface: EGLSurface? = null
+        var outerSurface: EGLSurface? = null
         doOnGlThread {
             val attribBuffer = intArrayOf(EGL14.EGL_NONE)
             val surface =
@@ -189,8 +176,8 @@ class EglContext {
             if (surface == EGL14.EGL_NO_SURFACE) {
                 checkGlError("Obtained no surface")
             }
+
             EGL14.eglMakeCurrent(display, surface, surface, context)
-            Log.d("Native", "New current context = ${EGL14.eglGetCurrentContext()}")
             if (defaultProgram == -1) {
                 defaultProgram = makeProgram(
                     mapOf(
@@ -200,13 +187,14 @@ class EglContext {
                 )
                 uniformTextureLocation = GLES30.glGetUniformLocation(defaultProgram, "tex")
                 vertexLocation = GLES30.glGetAttribLocation(defaultProgram, "position")
+                checkGlError("Getting attribute locations")
+
                 uvLocation = GLES30.glGetAttribLocation(defaultProgram, "uv")
-                Log.d("Native", "Attrib locations $vertexLocation, $uvLocation")
-                checkGlError("Getting uniform")
+                checkGlError("Getting uniform location")
             }
-            _surface = surface
+            outerSurface = surface
         }
-        return _surface!!
+        return outerSurface!!
     }
 
     fun makeCurrent(eglSurface: EGLSurface, width: Int, height: Int) {
@@ -219,17 +207,25 @@ class EglContext {
     }
 
     fun makeTexture(width: Int, height: Int): Int {
-        var _texture: Int? = null
+        var outerTexture: Int? = null
         doOnGlThread {
             val intArr = IntArray(1)
             GLES30.glGenTextures(1, intArr, 0)
             checkGlError("Generate texture")
+
             Log.d("Native", "${EGL14.eglGetCurrentContext()} ?= ${EGL14.EGL_NO_CONTEXT}")
             val texture = intArr[0]
-            Log.d("Native", "Texture = $texture")
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture)
             checkGlError("Bind texture")
-            val buffer = ByteBuffer.allocateDirect(width * height * 4)
+
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_NEAREST)
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_NEAREST)
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE)
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE)
+            checkGlError("Set texture parameters")
+
+            val buffer =
+                ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.nativeOrder())
             GLES30.glTexImage2D(
                 GLES30.GL_TEXTURE_2D,
                 0,
@@ -242,24 +238,27 @@ class EglContext {
                 buffer
             )
             checkGlError("Create texture buffer")
-            _texture = texture
+
+            outerTexture = texture
         }
-        return _texture!!
+        return outerTexture!!
     }
 
     private fun compileShader(source: String, shaderType: Int): Int {
-        val currentContext = EGL14.eglGetCurrentContext()
-        val noContext = EGL14.EGL_NO_CONTEXT
         val shaderId = GLES30.glCreateShader(shaderType)
-        Log.d("Native", "Created $shaderId\nContext $currentContext vs $noContext")
         checkGlError("Create shader")
+
         if (shaderId == 0) {
             Log.e("Native", "Could not create shader for some reason")
             checkGlError("Could not create shader")
         }
+
         GLES30.glShaderSource(shaderId, source)
         checkGlError("Setting shader source")
+
         GLES30.glCompileShader(shaderId)
+        checkGlError("Compile shader")
+
         val statusBuffer = IntArray(1)
         GLES30.glGetShaderiv(shaderId, GLES30.GL_COMPILE_STATUS, statusBuffer, 0)
         val shaderLog = GLES30.glGetShaderInfoLog(shaderId)
@@ -273,10 +272,7 @@ class EglContext {
     }
 
     private fun makeProgram(sources: Map<Int, String>): Int {
-        val currentContext = EGL14.eglGetCurrentContext()
-        val noContext = EGL14.EGL_NO_CONTEXT
         val program = GLES30.glCreateProgram()
-        Log.d("Native", "Created $program\nContext $currentContext vs $noContext")
         checkGlError("Create program")
         sources.forEach {
             val shader = compileShader(it.value, it.key)
@@ -284,7 +280,12 @@ class EglContext {
         }
         val linkBuffer = IntArray(1)
         GLES30.glLinkProgram(program)
+        checkGlError("Link program")
+
         GLES30.glGetProgramiv(program, GLES30.GL_LINK_STATUS, linkBuffer, 0)
+        val programLog = GLES30.glGetProgramInfoLog(program)
+        Log.d("Native", "Linking program #$program : $programLog")
+
         if (linkBuffer[0] == 0) {
             GLES30.glDeleteProgram(program)
             checkGlError("Failed to link program $program")
@@ -297,43 +298,36 @@ class EglContext {
     // but it seems I cannot?
     fun drawTextureToCurrentSurface(texture: Int, surface: EGLSurface) {
         doOnGlThread {
-            // Verify I have a context
-            val currentContext = EGL14.eglGetCurrentContext()
-            val noContext = EGL14.EGL_NO_CONTEXT
-            Log.d("Native", "Drawing, Context = $currentContext vs $noContext")
-
-            checkGlError("Just checking first")
-            GLES30.glClearColor(1f, 0f, 1f, 1f)
-            GLES30.glClearDepthf(1f)
-            GLES30.glDisable(GLES30.GL_DEPTH_TEST)
-            GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT or GLES30.GL_DEPTH_BUFFER_BIT)
-            checkGlError("Clearing")
+            GLES30.glClearColor(0f, 0f, 0f, 0f)
+            GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
+            checkGlError("Clear screen")
 
             GLES30.glUseProgram(defaultProgram)
-            checkGlError("Use program")
+            checkGlError("Set shader program")
 
             GLES30.glActiveTexture(GLES30.GL_TEXTURE0)
+            GLES30.glEnable(GLES30.GL_TEXTURE_2D)
             checkGlError("Activate texture 0")
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture)
-            checkGlError("Bind texture $texture")
+            checkGlError("Binding texture $texture")
             GLES30.glUniform1i(uniformTextureLocation, 0)
-            checkGlError("Set uniform")
+            checkGlError("Set texture uniform")
 
             GLES30.glEnableVertexAttribArray(vertexLocation)
             vertexBuffer.position(0)
             GLES30.glVertexAttribPointer(vertexLocation, 2, GLES30.GL_FLOAT, false, 0, vertexBuffer)
-            Log.d("Native", "Bound vertices (shader=$defaultProgram)")
-            checkGlError("Attribute 0")
+            checkGlError("Enable Attribute 0")
 
             GLES30.glEnableVertexAttribArray(uvLocation)
             uvBuffer.position(0)
             GLES30.glVertexAttribPointer(uvLocation, 2, GLES30.GL_FLOAT, false, 0, uvBuffer)
-            checkGlError("Attribute 1")
+            checkGlError("Enable Attribute 1")
 
             //indexBuffer.position(0)
             //GLES30.glDrawElements(GLES30.GL_TRIANGLES, 4, GLES30.GL_UNSIGNED_INT, indexBuffer)
             // I would expect to get a triangle of different color than the background
-            GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 3)
+            GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4)
+            checkGlError("Draw arrays")
             GLES30.glFinish()
             checkGlError("Finished GL")
 
@@ -344,7 +338,11 @@ class EglContext {
 
     fun blit(textureId: Int, x: Int, y: Int, width: Int, height: Int, data: ByteArray) {
         doOnGlThread {
-            val buffer = ByteBuffer.allocateDirect(data.size).also {
+            Log.d(
+                "Native",
+                "Texture = $textureId, Pixel 0 = ${data[0].toUByte()} ${data[1]} ${data[2]} ${data[3].toUByte()}"
+            )
+            val buffer = ByteBuffer.allocateDirect(data.size).order(ByteOrder.nativeOrder()).also {
                 it.position(0)
                 it.put(data)
                 it.position(0)
@@ -366,7 +364,7 @@ class EglContext {
     }
 
     fun readPixels(width: Int, height: Int): ByteArray {
-        var _array: ByteArray? = null
+        var outerArray: ByteArray? = null
         doOnGlThread {
             val buffer = ByteBuffer.allocateDirect(width * height * 4)
             val array = ByteArray(width * height * 4)
@@ -381,9 +379,9 @@ class EglContext {
             )
             buffer.position(0)
             buffer.get(array)
-            _array = array
+            outerArray = array
         }
-        return _array!!
+        return outerArray!!
     }
 
     fun deleteTex(textureId: Int) {

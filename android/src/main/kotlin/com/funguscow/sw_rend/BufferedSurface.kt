@@ -15,11 +15,12 @@ class BufferedSurface(val width: Int, val height: Int, textureRegistry: TextureR
     private val surfaceTexture: SurfaceTexture
 
     val textureId: Long
-    val glTextureId: Int
+    private val glTextureId: Int
 
     init {
         val entry = textureRegistry.createSurfaceTexture()
         surfaceTexture = entry.surfaceTexture()
+        surfaceTexture.setDefaultBufferSize(width, height)
         textureId = entry.id()
         Log.d("Native", "Generated texture = $textureId")
         eglSurface = eglContext.buildSurfaceTextureWindow(surfaceTexture)
