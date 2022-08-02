@@ -17,7 +17,8 @@ set(PLUGIN_NAME "sw_rend_plugin")
 # Any new source files that you add to the plugin should be added here.
 add_library(${PLUGIN_NAME} SHARED
   "sw_rend_plugin.cc"
-)
+        "sw_pixel_buffer.cc"
+        include/sw_rend/sw_pixel_buffer.h sw_pixel_buffer.cc)
 
 # Apply a standard set of build settings that are configured in the
 # application-level CMakeLists.txt. This can be removed for plugins that want
