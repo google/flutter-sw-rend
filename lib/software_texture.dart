@@ -2,10 +2,10 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:sw_rend/test_native.dart';
+import 'package:sw_rend/sw_rend.dart';
 
 class SoftwareTexture {
-  static final TestNative _plugin = TestNative();
+  static final SwRend _plugin = SwRend();
   static const int bytesPerPixel = 4;
 
   late final int textureId;
@@ -27,7 +27,7 @@ class SoftwareTexture {
     int y = area?.top.toInt() ?? 0;
     int w = area?.width.toInt() ?? width;
     int h = area?.height.toInt() ?? height;
-    Future<void> draw = _plugin.draw(textureId, x, y, w, h, buffer);
+    Future<void> draw = Future.value(null);//_plugin.draw(textureId, x, y, w, h, buffer);
     if (redraw) {
       Future<void> invalidate = _plugin.invalidate(textureId);
       return Future.wait([draw, invalidate]);

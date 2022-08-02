@@ -8,7 +8,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:sw_rend/software_texture.dart';
-import 'package:sw_rend/test_native.dart';
+import 'package:sw_rend/sw_rend.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,7 +24,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
   String twoPlusThree = 'Waiting';
-  final _testNativePlugin = TestNative();
+  final _testNativePlugin = SwRend();
   int width = 300, height = 300;
   num scale = 1;
   DateTime start = DateTime.now();
@@ -85,7 +85,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> tick() async {
-    num targetFps = 1;
+    num targetFps = 200;
     Duration wait = Duration(microseconds: 1e6 ~/ targetFps);
     DateTime pre = DateTime.now();
     await noisy();
@@ -107,16 +107,36 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> noisy() async {
     Uint8List pixels = texture!.buffer; //Uint8List(width * height * 4);
+    await texture!.readPixels();
     Random r = Random();
-    for (int i = 0; i < width * height * 4; i += 4) {
+    for (int i = 0; i < width * height * 4 * 0; i += 4) {
       int y = i ~/ width;
-      pixels[i] = r.nextInt(256) ~/ (10 + r.nextInt(4));
-      pixels[i + 1] = r.nextInt(256) ~/ (10 + r.nextInt(4));
+      int x = i % width;
+      pixels[i] = r.nextInt(256) ~/ (1 + r.nextInt(4));
+      pixels[i + 1] = x & 255;//r.nextInt(256) ~/ (10 + r.nextInt(4));
       pixels[i + 2] = y & 255; //r.nextInt(256) ~/ (1 + r.nextInt(4));
       pixels[i + 3] = 255;
     }
-    texture!.draw();
-    pixels = texture2!.buffer;
+    for (int i = 0; i < 0; i++) {
+      int x = r.nextInt(width - 1);
+      int y = r.nextInt(height - 1);
+      int w = r.nextInt(width - x);
+      int h = r.nextInt(height - y);
+      int red = r.nextInt(256);
+      int green = r.nextInt(256);
+      int blue = r.nextInt(256);
+      for (int dx = x; dx < x + w; dx++) {
+        for (int dy = y; dy < y + h; dy++) {
+          int index = 4 * ((dy * width) + dx);
+          pixels[index + 0] = red;
+          pixels[index + 1] = green;
+          pixels[index + 2] = blue;
+          pixels[index + 3] = 255;
+        }
+      }
+    }
+    await texture!.draw();
+    /*pixels = texture2!.buffer;
     for (int i = 0; i < width * height * 4; i += 4) {
       int x = i % width;
       pixels[i] = r.nextInt(256) ~/ (2 + r.nextInt(4));
@@ -124,7 +144,7 @@ class _MyAppState extends State<MyApp> {
       pixels[i + 2] = x & 255; //r.nextInt(256) ~/ (1 + r.nextInt(4));
       pixels[i + 3] = 255;
     }
-    texture2!.draw();
+    texture2!.draw();*/
   }
 
   @override
