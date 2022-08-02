@@ -2,10 +2,10 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:sw_rend/test_native.dart';
+import 'package:sw_rend/sw_rend.dart';
 
 class SoftwareTexture {
-  static final TestNative _plugin = TestNative();
+  static final SwRend _plugin = SwRend();
   static const int bytesPerPixel = 4;
 
   late final int textureId;

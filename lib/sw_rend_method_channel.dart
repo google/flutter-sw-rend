@@ -3,10 +3,10 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import 'test_native_platform_interface.dart';
+import 'sw_rend_platform_interface.dart';
 
-/// An implementation of [TestNativePlatform] that uses method channels.
-class MethodChannelTestNative extends TestNativePlatform {
+/// An implementation of [SwRendPlatform] that uses method channels.
+class MethodChannelTestNative extends SwRendPlatform {
   /// The method channel used to interact with the native platform.
   @visibleForTesting
   final methodChannel = const MethodChannel('com.funguscow/sw_rend');

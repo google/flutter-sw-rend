@@ -8,7 +8,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:sw_rend/software_texture.dart';
-import 'package:sw_rend/test_native.dart';
+import 'package:sw_rend/sw_rend.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,7 +24,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
   String twoPlusThree = 'Waiting';
-  final _testNativePlugin = TestNative();
+  final _testNativePlugin = SwRend();
   int width = 300, height = 300;
   num scale = 1;
   DateTime start = DateTime.now();

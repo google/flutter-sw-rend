@@ -2,25 +2,25 @@ import 'dart:typed_data';
 
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
-import 'test_native_method_channel.dart';
+import 'sw_rend_method_channel.dart';
 
-abstract class TestNativePlatform extends PlatformInterface {
+abstract class SwRendPlatform extends PlatformInterface {
   /// Constructs a TestNativePlatform.
-  TestNativePlatform() : super(token: _token);
+  SwRendPlatform() : super(token: _token);
 
   static final Object _token = Object();
 
-  static TestNativePlatform _instance = MethodChannelTestNative();
+  static SwRendPlatform _instance = MethodChannelTestNative();
 
-  /// The default instance of [TestNativePlatform] to use.
+  /// The default instance of [SwRendPlatform] to use.
   ///
   /// Defaults to [MethodChannelTestNative].
-  static TestNativePlatform get instance => _instance;
+  static SwRendPlatform get instance => _instance;
   
   /// Platform-specific implementations should set this with their own
-  /// platform-specific class that extends [TestNativePlatform] when
+  /// platform-specific class that extends [SwRendPlatform] when
   /// they register themselves.
-  static set instance(TestNativePlatform instance) {
+  static set instance(SwRendPlatform instance) {
     PlatformInterface.verifyToken(instance, _token);
     _instance = instance;
   }
