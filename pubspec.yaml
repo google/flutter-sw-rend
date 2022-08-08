@@ -36,7 +36,7 @@ flutter:
     platforms:
       android:
         package: com.funguscow.sw_rend
-        pluginClass: TestNativePlugin
+        pluginClass: SwRendPlugin
       windows:
         pluginClass: SwRendPluginCApi
       linux:

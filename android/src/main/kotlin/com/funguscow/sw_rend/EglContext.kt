@@ -213,7 +213,6 @@ class EglContext {
             GLES30.glGenTextures(1, intArr, 0)
             checkGlError("Generate texture")
 
-            Log.d("Native", "${EGL14.eglGetCurrentContext()} ?= ${EGL14.EGL_NO_CONTEXT}")
             val texture = intArr[0]
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture)
             checkGlError("Bind texture")
@@ -338,10 +337,6 @@ class EglContext {
 
     fun blit(textureId: Int, x: Int, y: Int, width: Int, height: Int, data: ByteArray) {
         doOnGlThread {
-            Log.d(
-                "Native",
-                "Texture = $textureId, Pixel 0 = ${data[0].toUByte()} ${data[1]} ${data[2]} ${data[3].toUByte()}"
-            )
             val buffer = ByteBuffer.allocateDirect(data.size).order(ByteOrder.nativeOrder()).also {
                 it.position(0)
                 it.put(data)

@@ -1,9 +1,6 @@
-import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'dart:async';
 
 import 'package:flutter/services.dart';
@@ -37,12 +34,6 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     initPlatformState();
-  }
-
-  void scheduleTick() {
-    SchedulerBinding.instance.scheduleFrameCallback((timeStamp) {
-      tick();
-    });
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -80,8 +71,6 @@ class _MyAppState extends State<MyApp> {
     });
 
     tick();
-
-    ///scheduleTick();
   }
 
   Future<void> tick() async {
@@ -97,54 +86,33 @@ class _MyAppState extends State<MyApp> {
       frames = 0;
       start = now;
     }
-    Duration passed = now.difference(last);
     last = now;
     wait = wait - now.difference(pre);
-    //print("$wait $passed");
     Timer(wait, tick);
-    //scheduleTick();
   }
 
   Future<void> noisy() async {
-    Uint8List pixels = texture!.buffer; //Uint8List(width * height * 4);
+    Uint8List pixels = texture!.buffer;
     await texture!.readPixels();
     Random r = Random();
-    for (int i = 0; i < width * height * 4 * 0; i += 4) {
+    for (int i = 0; i < width * height * 4; i += 4) {
       int y = i ~/ width;
       int x = i % width;
       pixels[i] = r.nextInt(256) ~/ (1 + r.nextInt(4));
-      pixels[i + 1] = x & 255;//r.nextInt(256) ~/ (10 + r.nextInt(4));
-      pixels[i + 2] = y & 255; //r.nextInt(256) ~/ (1 + r.nextInt(4));
+      pixels[i + 1] = x & 255;
+      pixels[i + 2] = y & 255;
       pixels[i + 3] = 255;
     }
-    for (int i = 0; i < 0; i++) {
-      int x = r.nextInt(width - 1);
-      int y = r.nextInt(height - 1);
-      int w = r.nextInt(width - x);
-      int h = r.nextInt(height - y);
-      int red = r.nextInt(256);
-      int green = r.nextInt(256);
-      int blue = r.nextInt(256);
-      for (int dx = x; dx < x + w; dx++) {
-        for (int dy = y; dy < y + h; dy++) {
-          int index = 4 * ((dy * width) + dx);
-          pixels[index + 0] = red;
-          pixels[index + 1] = green;
-          pixels[index + 2] = blue;
-          pixels[index + 3] = 255;
-        }
-      }
-    }
     await texture!.draw();
-    /*pixels = texture2!.buffer;
+    pixels = texture2!.buffer;
     for (int i = 0; i < width * height * 4; i += 4) {
       int x = i % width;
       pixels[i] = r.nextInt(256) ~/ (2 + r.nextInt(4));
       pixels[i + 1] = r.nextInt(256) ~/ (2 + r.nextInt(4));
-      pixels[i + 2] = x & 255; //r.nextInt(256) ~/ (1 + r.nextInt(4));
+      pixels[i + 2] = x & 255;
       pixels[i + 3] = 255;
     }
-    texture2!.draw();*/
+    await texture2!.draw();
   }
 
   @override

@@ -1,10 +1,10 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sw_rend/test_native_method_channel.dart';
+import 'package:sw_rend/sw_rend_method_channel.dart';
 
 void main() {
   MethodChannelTestNative platform = MethodChannelTestNative();
-  const MethodChannel channel = MethodChannel('test_native');
+  const MethodChannel channel = MethodChannel('com.funguscow/sw_rend');
 
   TestWidgetsFlutterBinding.ensureInitialized();
 

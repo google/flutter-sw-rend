@@ -1,14 +1,14 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sw_rend/test_native.dart';
-import 'package:sw_rend/test_native_platform_interface.dart';
-import 'package:sw_rend/test_native_method_channel.dart';
+import 'package:sw_rend/sw_rend.dart';
+import 'package:sw_rend/sw_rend_method_channel.dart';
+import 'package:sw_rend/sw_rend_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 class MockTestNativePlatform 
     with MockPlatformInterfaceMixin
-    implements TestNativePlatform {
+    implements SwRendPlatform {
 
   @override
   Future<String?> getPlatformVersion() => Future.value('42');
@@ -40,16 +40,16 @@ class MockTestNativePlatform
 }
 
 void main() {
-  final TestNativePlatform initialPlatform = TestNativePlatform.instance;
+  final SwRendPlatform initialPlatform = SwRendPlatform.instance;
 
   test('$MethodChannelTestNative is the default instance', () {
     expect(initialPlatform, isInstanceOf<MethodChannelTestNative>());
   });
 
   test('getPlatformVersion', () async {
-    TestNative testNativePlugin = TestNative();
+    SwRend testNativePlugin = SwRend();
     MockTestNativePlatform fakePlatform = MockTestNativePlatform();
-    TestNativePlatform.instance = fakePlatform;
+    SwRendPlatform.instance = fakePlatform;
   
     expect(await testNativePlugin.getPlatformVersion(), '42');
   });
