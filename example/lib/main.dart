@@ -1,3 +1,19 @@
+/*
+Copyright 2022 Google LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+ */
+
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -96,8 +112,8 @@ class _MyAppState extends State<MyApp> {
     await texture!.readPixels();
     Random r = Random();
     for (int i = 0; i < width * height * 4; i += 4) {
-      int y = i ~/ width;
-      int x = i % width;
+      int y = (i ~/ 4) ~/ width;
+      int x = (i ~/ 4) % width;
       pixels[i] = r.nextInt(256) ~/ (1 + r.nextInt(4));
       pixels[i + 1] = x & 255;
       pixels[i + 2] = y & 255;
@@ -106,7 +122,7 @@ class _MyAppState extends State<MyApp> {
     await texture!.draw();
     pixels = texture2!.buffer;
     for (int i = 0; i < width * height * 4; i += 4) {
-      int x = i % width;
+      int x = (i ~/ 4) % width;
       pixels[i] = r.nextInt(256) ~/ (2 + r.nextInt(4));
       pixels[i + 1] = r.nextInt(256) ~/ (2 + r.nextInt(4));
       pixels[i + 2] = x & 255;
