@@ -4,8 +4,8 @@
 # This file should be version controlled.
 
 version:
-  revision: 85684f9300908116a78138ea4c6036c35c9a1236
-  channel: stable
+  revision: f56d9982991ddf6fbd11d09dfc40d95af8e64834
+  channel: master
 
 project_type: plugin
 
@@ -13,17 +13,20 @@ project_type: plugin
 migration:
   platforms:
     - platform: root
-      create_revision: 85684f9300908116a78138ea4c6036c35c9a1236
-      base_revision: 85684f9300908116a78138ea4c6036c35c9a1236
+      create_revision: f56d9982991ddf6fbd11d09dfc40d95af8e64834
+      base_revision: f56d9982991ddf6fbd11d09dfc40d95af8e64834
     - platform: android
-      create_revision: 85684f9300908116a78138ea4c6036c35c9a1236
-      base_revision: 85684f9300908116a78138ea4c6036c35c9a1236
+      create_revision: f56d9982991ddf6fbd11d09dfc40d95af8e64834
+      base_revision: f56d9982991ddf6fbd11d09dfc40d95af8e64834
     - platform: linux
-      create_revision: 85684f9300908116a78138ea4c6036c35c9a1236
-      base_revision: 85684f9300908116a78138ea4c6036c35c9a1236
+      create_revision: f56d9982991ddf6fbd11d09dfc40d95af8e64834
+      base_revision: f56d9982991ddf6fbd11d09dfc40d95af8e64834
+    - platform: web
+      create_revision: f56d9982991ddf6fbd11d09dfc40d95af8e64834
+      base_revision: f56d9982991ddf6fbd11d09dfc40d95af8e64834
     - platform: windows
-      create_revision: 85684f9300908116a78138ea4c6036c35c9a1236
-      base_revision: 85684f9300908116a78138ea4c6036c35c9a1236
+      create_revision: f56d9982991ddf6fbd11d09dfc40d95af8e64834
+      base_revision: f56d9982991ddf6fbd11d09dfc40d95af8e64834
 
   # User provided section
 

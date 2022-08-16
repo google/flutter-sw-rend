@@ -84,7 +84,6 @@ namespace sw_rend {
 		for (int dy = 0; dy < height && y + dy < _height; dy++) {
 			std::memcpy(_pixels.data() + 4 * ((y + dy) * _width + x + x), pixels.data() + 4 * (dy * width + x), row_size * 4);
 		}
-		//invalidate();
 	}
 
 	// static
@@ -129,37 +128,14 @@ namespace sw_rend {
 		const flutter::MethodCall<flutter::EncodableValue>& method_call,
 		std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
 		const flutter::EncodableValue* argvalue = method_call.arguments();
-		if (method_call.method_name().compare("getPlatformVersion") == 0) {
-			std::ostringstream version_stream;
-			version_stream << "Windows ";
-			if (IsWindows10OrGreater()) {
-				version_stream << "10+";
-			}
-			else if (IsWindows8OrGreater()) {
-				version_stream << "8";
-			}
-			else if (IsWindows7OrGreater()) {
-				version_stream << "7";
-			}
-			result->Success(flutter::EncodableValue(version_stream.str()));
-		}
-		else if (method_call.method_name().compare("add") == 0) {
-			flutter::EncodableMap args = std::get<flutter::EncodableMap>(*argvalue);
-			int a = std::get<int>(args[flutter::EncodableValue("a")]);
-			int b = std::get<int>(args[flutter::EncodableValue("b")]);
-			int sum = a + b;
-			result->Success(flutter::EncodableValue(std::to_string(sum)));
-		}
-		else {
-			auto found = functions.find(method_call.method_name());
-			if (found == functions.end()) {
-				result->NotImplemented();
-			}
-			else {
-				ExposedFunction func = found->second;
-				std::invoke(func, *this, argvalue, result);
-			}
-		}
+        auto found = functions.find(method_call.method_name());
+        if (found == functions.end()) {
+            result->NotImplemented();
+        }
+        else {
+            ExposedFunction func = found->second;
+            std::invoke(func, *this, argvalue, result);
+        }
 	}
 
 	void SwRendPlugin::initialize(Args argptr, Return result) {

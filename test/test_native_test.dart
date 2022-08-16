@@ -27,12 +27,6 @@ class MockTestNativePlatform
     implements SwRendPlatform {
 
   @override
-  Future<String?> getPlatformVersion() => Future.value('42');
-
-  @override
-  Future<String?> addNums(int a, int b) => Future.value('${a + b}');
-
-  @override
   Future<int?> init(int w, int h) => Future.value(-1);
 
   @override
@@ -67,6 +61,6 @@ void main() {
     MockTestNativePlatform fakePlatform = MockTestNativePlatform();
     SwRendPlatform.instance = fakePlatform;
   
-    expect(await testNativePlugin.getPlatformVersion(), '42');
+    expect(await testNativePlugin.init(1, 1), -1);
   });
 }

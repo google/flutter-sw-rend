@@ -41,14 +41,6 @@ abstract class SwRendPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<String?> getPlatformVersion() {
-    throw UnimplementedError('platformVersion() has not been implemented.');
-  }
-
-  Future<String?> addNums(int a, int b) {
-    throw UnimplementedError('addNums() has not been implemented.');
-  }
-
   Future<int?> init(int w, int h) {
     throw UnimplementedError();
   }

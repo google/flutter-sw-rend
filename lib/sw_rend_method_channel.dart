@@ -25,16 +25,6 @@ class MethodChannelTestNative extends SwRendPlatform {
   @visibleForTesting
   final methodChannel = const MethodChannel('com.funguscow/sw_rend');
 
-  @override
-  Future<String?> getPlatformVersion() async {
-    final version = await methodChannel.invokeMethod<String>('getPlatformVersion');
-    return version;
-  }
-
-  @override
-  Future<String?> addNums(int a, int b) async {
-    return await methodChannel.invokeMethod<String>('add', <String, int>{'a': a, 'b': b});
-  }
 
   @override
   Future<int?> init(int w, int h) async {
@@ -58,14 +48,17 @@ class MethodChannelTestNative extends SwRendPlatform {
     return await methodChannel.invokeMethod<void>('invalidate', <String, int>{'texture': texId});
   }
 
+  @override
   Future<Int32List?> getSize(int texId) async {
     return await methodChannel.invokeMethod<Int32List?>('get_size', <String, int>{'texture': texId});
   }
 
+  @override
   Future<Int64List?> listTextures() async {
     return await methodChannel.invokeMethod<Int64List>('list_textures');
   }
 
+  @override
   Future<void> dispose(int texId) async {
     return await methodChannel.invokeMethod<void>('dispose', <String, int>{'texture': texId});
   }

@@ -182,23 +182,12 @@ static void sw_rend_plugin_handle_method_call(
 
   const gchar* method = fl_method_call_get_name(method_call);
 
-  if (strcmp(method, "getPlatformVersion") == 0) {
-    struct utsname uname_data = {};
-    uname(&uname_data);
-    g_autofree gchar *version = g_strdup_printf("Linux %s", uname_data.version);
-    g_autoptr(FlValue) result = fl_value_new_string(version);
-    response = FL_METHOD_RESPONSE(fl_method_success_response_new(result));
-  } else if(strcmp(method, "add") == 0) {
-    g_autoptr(FlValue) result = fl_value_new_string("0");
-    response = FL_METHOD_RESPONSE(fl_method_success_response_new(result));
+  MethodCallback func = (MethodCallback)g_hash_table_lookup(methods, method);
+  if (func == nullptr) {
+    response = FL_METHOD_RESPONSE(fl_method_not_implemented_response_new());
   } else {
-    MethodCallback func = (MethodCallback)g_hash_table_lookup(methods, method);
-    if (func == nullptr) {
-      response = FL_METHOD_RESPONSE(fl_method_not_implemented_response_new());
-    } else {
-      FlValue* args = fl_method_call_get_args(method_call);
-      response = func(self, args);
-    }
+    FlValue* args = fl_method_call_get_args(method_call);
+    response = func(self, args);
   }
 
   fl_method_call_respond(method_call, response, nullptr);

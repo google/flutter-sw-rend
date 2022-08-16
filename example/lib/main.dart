@@ -16,6 +16,7 @@ limitations under the License.
 
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -35,9 +36,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
-  String twoPlusThree = 'Waiting';
-  final _testNativePlugin = SwRend();
   int width = 300, height = 300;
   num scale = 1;
   DateTime start = DateTime.now();
@@ -45,6 +43,7 @@ class _MyAppState extends State<MyApp> {
   int frames = 0;
   double fps = 1;
   SoftwareTexture? texture, texture2;
+  late Uint8List gol;
 
   @override
   void initState() {
@@ -54,21 +53,18 @@ class _MyAppState extends State<MyApp> {
 
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    // We also handle the message potentially returning null.
-    try {
-      platformVersion = await _testNativePlugin.getPlatformVersion() ??
-          'Unknown platform version';
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
+    gol = Uint8List(width * height);
+    Random r = Random();
+    for (int i = 0; i < width * height; i++ ){
+      gol[i] = r.nextBool() ? 255 : 0;
     }
 
-    String sum = await _testNativePlugin.addNums(2, 3) ?? 'Failed to add';
     SoftwareTexture tex =
         SoftwareTexture(Size(width.toDouble(), height.toDouble()));
     await tex.generateTexture().then((void v) {
-      print("TEXTURE = ${tex.textureId}");
+      if (kDebugMode) {
+        print("TEXTURE = ${tex.textureId}");
+      }
       texture = tex;
     });
     tex = SoftwareTexture(Size(width.toDouble(), height.toDouble()));
@@ -80,11 +76,6 @@ class _MyAppState extends State<MyApp> {
     // message was in flight, we want to discard the reply rather than calling
     // setState to update our non-existent appearance.
     if (!mounted) return;
-
-    setState(() {
-      _platformVersion = platformVersion;
-      twoPlusThree = sum;
-    });
 
     tick();
   }
@@ -107,16 +98,54 @@ class _MyAppState extends State<MyApp> {
     Timer(wait, tick);
   }
 
+  Future<void> game() async {
+    Uint8List newGol = Uint8List(width * height);
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        int index = y * width + x;
+        int neighbors = 0;
+
+        for (int dy = y-1; dy <= y+1; dy++) {
+          for (int dx = x - 1; dx <= x + 1; dx++) {
+            if (dy == y && dx == x) {
+              continue;
+            }
+            if (gol[dx % width + (dy % height) * width] != 0) {
+              neighbors += 1;
+            }
+          }
+        }
+
+        if (neighbors < 2) {
+          newGol[index] = 0;
+        }
+        else if (neighbors > 3 && gol[index] != 0) {
+          newGol[index] = 0;
+        }
+        else if (neighbors == 3) {
+          newGol[index] = 255;
+        }
+        else {
+          newGol[index] = gol[index];
+        }
+      }
+    }
+    gol.setAll(0, newGol);
+  }
+
   Future<void> noisy() async {
+    await game();
     Uint8List pixels = texture!.buffer;
     await texture!.readPixels();
     Random r = Random();
     for (int i = 0; i < width * height * 4; i += 4) {
       int y = (i ~/ 4) ~/ width;
       int x = (i ~/ 4) % width;
-      pixels[i] = r.nextInt(256) ~/ (1 + r.nextInt(4));
-      pixels[i + 1] = x & 255;
-      pixels[i + 2] = y & 255;
+      int index = i ~/ 4;
+      int color = gol[index];
+      pixels[i] = color;
+      pixels[i + 1] = color;
+      pixels[i + 2] = color;
       pixels[i + 3] = 255;
     }
     await texture!.draw();

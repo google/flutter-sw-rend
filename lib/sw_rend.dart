@@ -19,13 +19,6 @@ import 'dart:typed_data';
 import 'sw_rend_platform_interface.dart';
 
 class SwRend {
-  Future<String?> getPlatformVersion() {
-    return SwRendPlatform.instance.getPlatformVersion();
-  }
-  Future<String?> addNums(int a, int b) {
-    return SwRendPlatform.instance.addNums(a, b);
-    // return Future.value('70');
-  }
   Future<int?> init(int w, int h) {
     return SwRendPlatform.instance.init(w, h);
   }
