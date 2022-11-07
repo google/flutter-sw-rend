@@ -22,7 +22,6 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:sw_rend/software_texture.dart';
-import 'package:sw_rend/sw_rend.dart';
 
 void main() {
   runApp(const MyApp());
@@ -139,8 +138,6 @@ class _MyAppState extends State<MyApp> {
     await texture!.readPixels();
     Random r = Random();
     for (int i = 0; i < width * height * 4; i += 4) {
-      int y = (i ~/ 4) ~/ width;
-      int x = (i ~/ 4) % width;
       int index = i ~/ 4;
       int color = gol[index];
       pixels[i] = color;
