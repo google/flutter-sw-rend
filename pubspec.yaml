@@ -13,8 +13,8 @@
 #    limitations under the License.
 
 name: sw_rend
-description: Can I make a win plugin
-version: 0.0.1
+description: Draw pixel data to a widget simply and quickly.
+version: 0.0.2
 homepage:
 repository: https://github.com/google/flutter-sw-rend
 
